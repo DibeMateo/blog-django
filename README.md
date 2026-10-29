@@ -1,163 +1,151 @@
-# Blog Project (Django)
+# Blog Web con Django
 
-Proyecto base de un blog desarrollado con Django. Incluye la app `posts`,
-configurada en español y con la zona horaria de Argentina. Ya cuenta con
-un sitio navegable (páginas de Inicio y Acerca de), con herencia de
-templates y estilos propios en CSS.
+Blog web desarrollado con Django como proyecto final del curso de Python de Coderhouse. Permite publicar artículos con imágenes, registrarse, iniciar sesión y tener un perfil de autor con biografía y avatar.
 
-## Requisitos previos
+## Tecnologías
 
-- Python 3.10 o superior
-- pip
+- Python 3
+- Django
+- SQLite (base de datos por defecto)
+- Pillow (manejo de imágenes)
+- python-decouple (variables de entorno)
+- HTML y CSS (templates de Django)
 
-## Cómo clonar el repositorio
+## Funcionalidades principales
+
+- Listado de publicaciones y detalle de cada post (visibles para cualquier visitante).
+- Crear, editar y eliminar posts desde la interfaz web (solo usuarios autenticados).
+- Imagen opcional en cada post. Si un post no tiene imagen, la página se ve igual.
+- Registro de usuarios, inicio y cierre de sesión.
+- Perfil de usuario con biografía, link web y avatar, editable.
+- Menú que cambia según el usuario esté autenticado o sea anónimo.
+- Panel de administración de Django.
+
+## Instalación
+
+Requisitos: Python 3.10 o superior y Git.
+
+### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/DibeMateo/Proyectos-Coderhouse.git
-cd Proyectos-Coderhouse/Django/blog_django
+git clone https://github.com/DibeMateo/blog-django.git
+cd blog-django
 ```
 
-## Cómo crear y activar el entorno virtual
+### 2. Crear y activar el entorno virtual
 
-Crear el entorno virtual (una sola vez):
+macOS / Linux:
 
 ```bash
 python3 -m venv venv
+source venv/bin/activate
 ```
 
-Activarlo (hay que repetir este paso cada vez que abrís una terminal nueva
-para trabajar en el proyecto):
+Windows (PowerShell):
 
-- En macOS / Linux:
-```bash
-  source venv/bin/activate
-```
-- En Windows:
-```bash
-  venv\Scripts\activate
+```powershell
+python -m venv venv
+venv\Scripts\activate
 ```
 
-Vas a ver que el prompt de la terminal cambia, agregando `(venv)` al
-principio — esa es la señal de que el entorno está activo.
-
-## Cómo instalar las dependencias
-
-Con el entorno virtual ya activado:
+### 3. Instalar las dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Esto instala Django y el resto de las dependencias con las mismas
-versiones exactas con las que fue desarrollado el proyecto.
+### 4. Variables de entorno (opcional)
 
-## Cómo levantar el servidor de desarrollo
+El proyecto corre sin configurar nada. Si querés usar tu propia clave:
+
+```bash
+cp .env.example .env
+```
+
+y completá `SECRET_KEY` en el archivo `.env` (que no se sube a GitHub).
+
+### 5. Crear la base de datos
+
+El repositorio no incluye `db.sqlite3`; se genera con las migraciones:
+
+```bash
+python manage.py migrate
+```
+
+### 6. Iniciar el servidor
 
 ```bash
 python manage.py runserver
 ```
 
-El proyecto va a quedar disponible en `http://127.0.0.1:8000/`.
+Abrir en el navegador: http://127.0.0.1:8000/
 
-## App principal
+### 7. Crear un superusuario (opcional, para el panel de administración)
 
-La app creada para este proyecto se llama **`posts`**, registrada en
-`blog_project/settings.py` dentro de `INSTALLED_APPS` como
-`posts.apps.PostsConfig`.
+```bash
+python manage.py createsuperuser
+```
 
-## Páginas disponibles
+Completá usuario, email y contraseña cuando lo pida. El admin está en http://127.0.0.1:8000/admin/
 
-| Ruta        | Vista              | Template                  |
-|-------------|---------------------|----------------------------|
-| `/`         | `posts.views.inicio` | `posts/templates/posts/inicio.html` |
-| `/acerca/`  | `posts.views.acerca` | `posts/templates/posts/acerca.html` |
+## Cómo probar el proyecto desde cero
 
-Ambos templates heredan de `posts/templates/posts/base.html` mediante
-`{% extends %}`, que define el esqueleto HTML común (navegación y hoja
-de estilos). Las rutas se declaran en `posts/urls.py` y se conectan al
-proyecto principal desde `blog_project/urls.py` con `include()`.
+El repositorio no incluye base de datos ni imágenes subidas. Para probarlo:
 
-## Archivos estáticos (CSS)
+1. Registrarse en `/usuarios/registro/` (queda logueado automáticamente).
+2. Crear un post en `/posts/nuevo/`, con o sin imagen. **Tiene que tener estado "Publicado" para aparecer en el listado.**
+3. Editar el perfil en `/usuarios/perfil/editar/` y subir un avatar.
+4. Cerrar sesión y verificar que el listado sigue visible pero crear, editar y eliminar redirigen al login.
 
-Los estilos viven en `posts/static/posts/css/estilos.css`, y se cargan
-en `base.html` con `{% load static %}` y `{% static 'posts/css/estilos.css' %}`.
+## Rutas
+
+| Ruta | Descripción | Requiere login |
+|---|---|---|
+| `/` | Inicio | No |
+| `/acerca/` | Acerca de | No |
+| `/posts/` | Listado de publicaciones | No |
+| `/posts/<id>/` | Detalle de un post | No |
+| `/posts/nuevo/` | Crear post | **Sí** |
+| `/posts/<id>/editar/` | Editar post | **Sí** |
+| `/posts/<id>/eliminar/` | Eliminar post (confirmación y borrado por POST) | **Sí** |
+| `/usuarios/registro/` | Registro | No |
+| `/usuarios/login/` | Iniciar sesión | No |
+| `/usuarios/logout/` | Cerrar sesión (solo por POST) | **Sí** |
+| `/usuarios/perfil/` | Ver perfil | **Sí** |
+| `/usuarios/perfil/editar/` | Editar biografía, link web y avatar | **Sí** |
+| `/admin/` | Panel de administración | Superusuario |
+
+La protección está en las vistas con `@login_required`. Si un visitante anónimo entra directo a una ruta protegida, Django lo redirige al login (`LOGIN_URL`) y, al autenticarse, vuelve a la página pedida.
+
+## Usuarios y perfil
+
+- **Registro:** `RegistroForm` extiende `UserCreationForm` y agrega el email. Al guardar el usuario se crea su `Perfil` y se inicia sesión.
+- **Login / logout:** vistas `LoginView` y `LogoutView` de `django.contrib.auth`. El cierre de sesión se hace con un formulario POST con `{% csrf_token %}`.
+- **Modelo `Perfil`:** relación `OneToOneField` con `User`, con `biografia`, `link_web` y `avatar`.
+
+## Imágenes
+
+- Las imágenes de posts se guardan en `media/posts/` y los avatares en `media/avatares/`.
+- `MEDIA_URL = '/media/'` y `MEDIA_ROOT = BASE_DIR / 'media'` en `settings.py`. En desarrollo (`DEBUG = True`) Django las sirve con `static()` en el `urls.py` principal.
+- Los formularios con archivos usan `enctype="multipart/form-data"` y las vistas pasan `request.FILES`.
+- La carpeta `media/` no se sube al repositorio: se crea sola al subir la primera imagen.
 
 ## Estructura del proyecto
 
-## Base de datos y panel de administración
+```
+blog-django/
+├── manage.py
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── README.md
+├── blog_project/      # configuración (settings.py, urls.py)
+├── posts/             # app de publicaciones (modelos, vistas, templates, estáticos)
+└── usuarios/          # app de usuarios (registro, perfil, templates)
+```
 
-El proyecto usa SQLite (archivo `db.sqlite3`, que no se sube al repositorio). Después de clonar e instalar las dependencias, hay que crear la base de datos local:
+## Autor
 
-    python manage.py migrate
-
-El modelo `Post` (`posts/models.py`) tiene los campos `titulo`, `contenido`, `autor`, `fecha_creacion` y `estado` (borrador, publicado o archivado).
-
-### Cómo entrar al panel de administración
-
-Primero, crear un superusuario (el comando pide nombre de usuario, email y contraseña):
-
-    python manage.py createsuperuser
-
-Después, levantar el servidor:
-
-    python manage.py runserver
-
-Y entrar a http://127.0.0.1:8000/admin/ con el usuario y la contraseña elegidos. Desde la sección "Posts" se pueden crear, editar y borrar publicaciones.
-
-### Listado de publicaciones
-
-La página http://127.0.0.1:8000/posts/ muestra dinámicamente los posts con estado "publicado", del más reciente al más antiguo. Los posts en borrador o archivados no aparecen.
-
-## CRUD de publicaciones con imágenes
-
-| Ruta | Vista | Descripción |
-|---|---|---|
-| `/posts/` | `lista_posts` | Lista de publicaciones (solo las "Publicado") |
-| `/posts/nuevo/` | `crear_post` | Formulario para crear |
-| `/posts/<id>/` | `detalle_post` | Detalle de una publicación |
-| `/posts/<id>/editar/` | `editar_post` | Formulario para editar |
-| `/posts/<id>/eliminar/` | `eliminar_post` | Confirmación y borrado (solo por POST) |
-
-### Manejo de imágenes
-
-- El modelo `Post` tiene un campo `imagen = ImageField(upload_to='posts/', null=True, blank=True)`. Es opcional.
-- `ImageField` requiere **Pillow** (`pip install Pillow`, ya incluido en `requirements.txt`).
-- En `settings.py` se definen `MEDIA_URL = '/media/'` y `MEDIA_ROOT = BASE_DIR / 'media'`.
-- En `blog_project/urls.py` se usa `static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)` solo cuando `DEBUG = True` (desarrollo).
-- Para subir archivos, el `<form>` necesita `method="post"` y `enctype="multipart/form-data"`, y la vista tiene que pasar `request.FILES` al formulario: `PostForm(request.POST, request.FILES)`.
-- Las imágenes se guardan en `media/posts/` y en la base solo se guarda la ruta. En los templates se muestran con `{{ post.imagen.url }}`.
-- Para que un post nuevo aparezca en la lista, su estado debe ser "Publicado".
-
-## Usuarios, autenticación y perfil
-
-La app `usuarios` usa el sistema de autenticación de Django (`django.contrib.auth`).
-
-| Ruta | Vista | Requiere login |
-|---|---|---|
-| `/usuarios/registro/` | `registro` | No |
-| `/usuarios/login/` | `LoginView` | No |
-| `/usuarios/logout/` | `LogoutView` (solo POST) | Sí |
-| `/usuarios/perfil/` | `perfil` | Sí |
-| `/usuarios/perfil/editar/` | `editar_perfil` | Sí |
-| `/posts/nuevo/` | `crear_post` | Sí |
-| `/posts/<id>/editar/` | `editar_post` | Sí |
-| `/posts/<id>/eliminar/` | `eliminar_post` | Sí |
-| `/posts/` y `/posts/<id>/` | listado y detalle | No (públicos) |
-
-### Registro
-`RegistroForm` extiende `UserCreationForm` y agrega el campo `email`. Al guardar el usuario, la vista crea su perfil con `Perfil.objects.create(user=usuario)` y lo deja logueado.
-
-### Iniciar sesión
-Desde `/usuarios/login/`. Si se intenta entrar a una ruta protegida sin estar logueado, Django redirige al login (`LOGIN_URL = 'login'`) y, al autenticarse, vuelve a la página pedida.
-
-### Cerrar sesión
-Desde el botón "Cerrar sesión" del menú. Es un formulario con `POST` y `{% csrf_token %}`, porque `LogoutView` no acepta `GET`.
-
-### Modelo `Perfil`
-Está en `usuarios/models.py` y se relaciona con `User` mediante `OneToOneField` (`related_name='perfil'`). Campos: `biografia` (TextField), `link_web` (URLField opcional) y `avatar` (ImageField opcional). Está registrado en el admin.
-
-### Avatares
-Se suben a `media/avatares/`. Para que se vean están configurados `MEDIA_URL = '/media/'` y `MEDIA_ROOT = BASE_DIR / 'media'`, y en `urls.py` se sirve `media` con `static()` cuando `DEBUG = True`. El formulario de edición usa `enctype="multipart/form-data"` y la vista pasa `request.FILES` a `PerfilForm`.
-
-### Vistas protegidas
-Crear, editar y eliminar posts usan `@login_required`. El listado y el detalle siguen siendo públicos. El menú cambia según el usuario esté autenticado o no.
+Mateo Di Benedetto
+GitHub: [DibeMateo](https://github.com/DibeMateo)
+Proyecto final del curso de Python — Coderhouse.

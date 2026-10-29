@@ -10,3 +10,7 @@ __pycache__/
 
 # Archivos del sistema
 .DS_Store
+.env
+media/
+.idea/
+.vscode/
